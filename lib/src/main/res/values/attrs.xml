@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <declare-styleable name="DoraBookPager">
+        <!-- 翻页动画时长（毫秒） -->
+        <attr name="dview_bp_duration" format="integer" />
+        <!-- 折角最大半径（像素） -->
+        <attr name="dview_bp_maxCurlRadius" format="dimension" />
+    </declare-styleable>
+</resources>
