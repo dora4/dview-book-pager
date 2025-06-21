@@ -2,6 +2,9 @@ dview-book-pager
 ![Release](https://jitpack.io/v/dora4/dview-book-pager.svg)
 --------------------------------
 
+#### 卡片
+![DORA视图 探索圣典](https://github.com/user-attachments/assets/f7783f97-7e6c-4307-b342-d4984392cdba)
+
 #### Gradle依赖配置
 
 ```groovy
