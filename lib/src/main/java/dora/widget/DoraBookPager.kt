@@ -112,52 +112,78 @@ class DoraBookPager @JvmOverloads constructor(
         val currBmp = pages[currentIndex]
         val nextBmp = pages.getOrNull(currentIndex + 1) ?: currBmp
 
-        canvas.drawBitmap(currBmp, null, Rect(0,0,width,height), paint)
+        // 先画下一页（底层）
+        canvas.drawBitmap(nextBmp, null, Rect(0, 0, width, height), paint)
 
+        // 翻页参数
         val curlX = width * animFraction
         val curlY = height * 0.5f
         val radius = maxCurlRadius * animFraction
 
-        val Ax = curlX;         val Ay = 0f
+        val Ax = curlX;          val Ay = 0f
         val Bx = curlX + radius; val By = curlY - radius
         val Cx = curlX + radius; val Cy = curlY + radius
-        val Dx = curlX;         val Dy = height.toFloat()
+        val Dx = curlX;          val Dy = height.toFloat()
 
+        // 当前页未翻部分
         pathFront.reset()
-        pathFront.moveTo(0f,0f)
-        pathFront.lineTo(Ax,Ay)
-        pathFront.quadTo(Bx,By, Cx,Cy)
-        pathFront.lineTo(Dx,Dy)
-        pathFront.lineTo(0f,height.toFloat())
+        pathFront.moveTo(0f, 0f)
+        pathFront.lineTo(Ax, Ay)
+        pathFront.cubicTo(Bx, By, Cx, Cy, Dx, Dy) // 用 cubic 更自然
+        pathFront.lineTo(0f, height.toFloat())
         pathFront.close()
 
+        // 翻折部分
         pathFold.reset()
-        pathFold.moveTo(Ax,Ay)
-        pathFold.quadTo(Bx,By, Cx,Cy)
-        pathFold.lineTo(Dx,Dy)
+        pathFold.moveTo(Ax, Ay)
+        pathFold.cubicTo(Bx, By, Cx, Cy, Dx, Dy)
+        pathFold.lineTo(width.toFloat(), height.toFloat())
+        pathFold.lineTo(width.toFloat(), 0f)
         pathFold.close()
 
+        // 绘制当前页正面（未翻折区域）
         canvas.save()
         canvas.clipPath(pathFront)
-        canvas.drawBitmap(currBmp, null, Rect(0,0,width,height), paint)
+        canvas.drawBitmap(currBmp, null, Rect(0, 0, width, height), paint)
         canvas.restore()
 
-        val shader = LinearGradient(
-            Ax,Ay, Bx,By,
-            intArrayOf(0x80FFFFFF.toInt(), 0x00FFFFFF),
-            floatArrayOf(0f,1f),
-            Shader.TileMode.CLAMP
-        )
-        paint.shader = shader
+        // 绘制背面（翻折区域）
         canvas.save()
         canvas.clipPath(pathFold)
-        canvas.drawBitmap(nextBmp, null, Rect(0,0,width,height), paint)
-        canvas.restore()
+
+        // 做水平镜像，模拟背面
+        val matrix = Matrix()
+        matrix.setScale(-1f, 1f, curlX, curlY)
+        val backPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            // 背面调暗
+            colorFilter = ColorMatrixColorFilter(ColorMatrix().apply {
+                setScale(0.7f, 0.7f, 0.7f, 1f)
+            })
+        }
+        canvas.drawBitmap(currBmp, matrix, backPaint)
+
+        // 光影效果：亮面
+        val lightShader = LinearGradient(
+            Ax, Ay, Bx, By,
+            intArrayOf(Color.WHITE, Color.TRANSPARENT),
+            floatArrayOf(0f, 1f),
+            Shader.TileMode.CLAMP
+        )
+        paint.shader = lightShader
+        canvas.drawPath(pathFold, paint)
         paint.shader = null
 
-        // 阴影效果
-        paint.setShadowLayer(20f, 0f, 0f, Color.BLACK)
+        // 光影效果：暗面
+        val darkShader = LinearGradient(
+            Cx, Cy, Dx, Dy,
+            intArrayOf(0x80000000.toInt(), Color.TRANSPARENT),
+            floatArrayOf(0f, 1f),
+            Shader.TileMode.CLAMP
+        )
+        paint.shader = darkShader
         canvas.drawPath(pathFold, paint)
-        paint.clearShadowLayer()
+        paint.shader = null
+
+        canvas.restore()
     }
 }
