@@ -402,12 +402,12 @@ class DoraBookPager @JvmOverloads constructor(
         val gradientDrawable: GradientDrawable
         if (style == DragStyle.DragTopRight) {
             gradientDrawable = drawableLeftTopRight
-            left = (e.x - lPathAShadowDis / 2) as Int
+            left = (e.x - lPathAShadowDis / 2).toInt()
             right = (e.x).toInt()
         } else {
             gradientDrawable = drawableLeftLowerRight
             left = (e.x).toInt()
-            right = (e.x + lPathAShadowDis / 2) as Int
+            right = (e.x + lPathAShadowDis / 2).toInt()
         }
         val path = Path()
         path.moveTo(a.x - rPathAShadowDis.coerceAtLeast(lPathAShadowDis) / 2, a.y)
@@ -437,12 +437,12 @@ class DoraBookPager @JvmOverloads constructor(
         val gradientDrawable: GradientDrawable
         if (style == DragStyle.DragTopRight) {
             gradientDrawable = drawableRightTopRight
-            top = (h.y - rPathAShadowDis / 2) as Int
+            top = (h.y - rPathAShadowDis / 2).toInt()
             bottom = h.y.toInt()
         } else {
             gradientDrawable = drawableRightLowerRight
             top = h.y.toInt()
-            bottom = (h.y + rPathAShadowDis / 2) as Int
+            bottom = (h.y + rPathAShadowDis / 2).toInt()
         }
         gradientDrawable.setBounds(left, top, right, bottom)
         val path = Path()
@@ -543,7 +543,7 @@ class DoraBookPager @JvmOverloads constructor(
         val deepOffset = 1
         val lightOffset = -30
         val viewDiagonalLength =
-            hypot(viewWidth.toDouble(), viewHeight.toDouble()) as Float
+            hypot(viewWidth.toDouble(), viewHeight.toDouble()).toFloat()
         val midpoint_ce = (c.x + e.x).toInt() / 2
         val midpoint_jh = (j.y + h.y).toInt() / 2
         val minDisToControlPoint =
