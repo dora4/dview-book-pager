@@ -65,7 +65,7 @@ class DoraBookPager @JvmOverloads constructor(
     var lPathAShadowDis: Float = 0f
     var rPathAShadowDis: Float = 0f
     private val matrixArray = floatArrayOf(0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 1.0f)
-    private lateinit var matrix: Matrix
+    private var matrix = Matrix()
     private var defaultWidth = 600
     private var defaultHeight = 1000
     private var viewWidth = 0
