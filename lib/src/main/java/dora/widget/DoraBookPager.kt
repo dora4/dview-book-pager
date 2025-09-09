@@ -1,12 +1,14 @@
 package dora.widget
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import android.view.animation.DecelerateInterpolator
 
-class BookPageView @JvmOverloads constructor(
+class DoraBookPager @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = 0
@@ -37,6 +39,8 @@ class BookPageView @JvmOverloads constructor(
     private var currBitmap: Bitmap? = null
     private var nextBitmap: Bitmap? = null
 
+    private var animator: ValueAnimator? = null
+
     fun setBitmaps(curr: Bitmap, next: Bitmap?) {
         currBitmap = curr
         nextBitmap = next
@@ -52,6 +56,7 @@ class BookPageView @JvmOverloads constructor(
     override fun onTouchEvent(event: MotionEvent): Boolean {
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
+                animator?.cancel()
                 a.x = event.x
                 a.y = event.y
                 style = when {
@@ -81,14 +86,52 @@ class BookPageView @JvmOverloads constructor(
                 return true
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                // 松手回弹（简单处理）
-                a.x = viewWidth - 1f
-                a.y = viewHeight / 2f
-                invalidate()
+                startAutoFlip()
                 return true
             }
         }
         return super.onTouchEvent(event)
+    }
+
+    /** 启动自动翻页 / 回弹动画 */
+    private fun startAutoFlip() {
+        val endX: Float
+        val endY: Float
+
+        if (style == STYLE_MIDDLE) {
+            // 中间水平翻页：决定是翻过去还是回弹
+            if (a.x < viewWidth / 2f) {
+                // 翻过去
+                endX = 0f
+            } else {
+                // 回弹
+                endX = viewWidth.toFloat()
+            }
+            endY = viewHeight / 2f
+        } else {
+            // 角落翻页：简单处理 -> 如果拖过中线，就翻到左边，否则回弹
+            if (a.x < viewWidth / 2f) {
+                endX = 0f
+            } else {
+                endX = viewWidth.toFloat() - 1f
+            }
+            endY = f.y
+        }
+
+        animator?.cancel()
+        animator = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 400
+            interpolator = DecelerateInterpolator()
+            val startX = a.x
+            val startY = a.y
+            addUpdateListener { anim ->
+                val t = anim.animatedValue as Float
+                a.x = startX + (endX - startX) * t
+                a.y = startY + (endY - startY) * t
+                invalidate()
+            }
+            start()
+        }
     }
 
     override fun onDraw(canvas: Canvas) {
