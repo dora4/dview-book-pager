@@ -11,6 +11,7 @@ import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.animation.LinearInterpolator
 import android.widget.Scroller
 import kotlin.math.abs
@@ -45,6 +46,10 @@ class DoraBookPager @JvmOverloads constructor(
         isSubpixelText = true
         textSize = 30f
     }
+    private var isDragging = false
+    private var touchSlop = 10
+    private var downX = 0f
+    private var downY = 0f
 
     private var a = PagerPoint()
     private var f = PagerPoint()
@@ -109,6 +114,11 @@ class DoraBookPager @JvmOverloads constructor(
             const val DRAG_TOP_RIGHT = 2
             const val DRAG_BOTTOM_RIGHT = 3
         }
+    }
+
+    override fun onFinishInflate() {
+        super.onFinishInflate()
+        touchSlop = ViewConfiguration.get(context).scaledTouchSlop
     }
 
     private fun createGradientDrawable() {
@@ -350,27 +360,44 @@ class DoraBookPager @JvmOverloads constructor(
         super.onTouchEvent(event)
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                val x = event.x
-                val y = event.y
-                if (x <= viewWidth / 3) {
+                downX = event.x
+                downY = event.y
+                if (downX <= viewWidth / 3) {
                     style = DragStyle.DragLeft
-                    updateTouchPoint(x, y, style)
-                } else if (x > viewWidth / 3 && y <= viewHeight / 3) {
+                    updateTouchPoint(downX, downY, style)
+                } else if (downX > viewWidth / 3 && downY <= viewHeight / 3) {
                     style = DragStyle.DragTopRight
-                    updateTouchPoint(x, y, style)
-                } else if (x > viewWidth * 2 / 3 && y > viewHeight / 3 && y <= viewHeight * 2 / 3) {
+                    updateTouchPoint(downX, downY, style)
+                } else if (downX > viewWidth * 2 / 3 && downY > viewHeight / 3 && downY <= viewHeight * 2 / 3) {
                     style = DragStyle.DragRight
-                    updateTouchPoint(x, y, style)
-                } else if (x > viewWidth / 3 && y > viewHeight * 2 / 3) {
+                    updateTouchPoint(downX, downY, style)
+                } else if (downX > viewWidth / 3 && downY > viewHeight * 2 / 3) {
                     style = DragStyle.DragBottomRight
-                    updateTouchPoint(x, y, style)
-                } else if (x > viewWidth / 3 && x < viewWidth * 2 / 3 && y > viewHeight / 3 && y < viewHeight * 2 / 3) {
+                    updateTouchPoint(downX, downY, style)
+                } else if (downX > viewWidth / 3 && downX < viewWidth * 2 / 3 && downY > viewHeight / 3 && downY < viewHeight * 2 / 3) {
                     // 中间
                 }
+                isDragging = false
                 return true
             }
-            MotionEvent.ACTION_MOVE -> updateTouchPoint(event.x, event.y, style)
-            MotionEvent.ACTION_UP -> startCancelAnimation()
+            MotionEvent.ACTION_MOVE -> {
+                val dx = event.x - downX
+                val dy = event.y - downY
+                if (!isDragging && hypot(dx, dy) > touchSlop) {
+                    isDragging = true
+                }
+                updateTouchPoint(event.x, event.y, style)
+                return true
+            }
+            MotionEvent.ACTION_UP -> {
+                if (isDragging) {
+                    isDragging = false
+                    return true
+                }
+                startCancelAnimation()
+                listener?.onPageCancel()
+                return true
+            }
         }
         return super.onTouchEvent(event)
     }
