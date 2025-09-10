@@ -170,7 +170,7 @@ class DoraBookPager @JvmOverloads constructor(
         pathBContentBitmap = Bitmap.createBitmap(viewWidth, viewHeight, Bitmap.Config.RGB_565);
         drawPathBContentBitmap(pathBContentBitmap, pathBPaint);
         pathCContentBitmap = Bitmap.createBitmap(viewWidth, viewHeight, Bitmap.Config.RGB_565);
-        drawPathAContentBitmap(pathCContentBitmap, pathCPaint);
+        drawPathCContentBitmap(pathCContentBitmap, pathCPaint);
     }
 
     private fun drawPathAContentBitmap(bitmap: Bitmap, pathPaint: Paint) {
@@ -222,11 +222,11 @@ class DoraBookPager @JvmOverloads constructor(
         if (a.x == -1f && a.y == -1f) {
             drawPathAContent(canvas, getPathDefault())
         } else {
-            if (f.x == viewWidth.toFloat() && f.y == 0f) {
+            if (f.x.toInt() == viewWidth && f.y.toInt() == 0) {
                 drawPathAContent(canvas, getPathAFromTopRight())
                 drawPathCContent(canvas, getPathAFromTopRight())
                 drawPathBContent(canvas, getPathAFromTopRight())
-            } else if (f.x == viewWidth.toFloat() && f.y == viewHeight.toFloat()) {
+            } else if (f.x.toInt() == viewWidth && f.y.toInt() == viewHeight) {
                 drawPathAContent(canvas, getPathAFromBottomRight())
                 drawPathCContent(canvas, getPathAFromBottomRight())
                 drawPathBContent(canvas, getPathAFromBottomRight())
@@ -279,7 +279,7 @@ class DoraBookPager @JvmOverloads constructor(
         a.y = abs((f.y - h2).toDouble()).toFloat()
     }
 
-    fun updateTouchPoint(x: Float, y: Float, style: DragStyle) {
+    private fun updateTouchPoint(x: Float, y: Float, style: DragStyle) {
         val touchPoint: PagerPoint?
         a.x = x
         a.y = y
@@ -317,7 +317,7 @@ class DoraBookPager @JvmOverloads constructor(
         }
     }
 
-    fun startCancelAnimation() {
+    private fun startCancelAnimation() {
         val dx: Int
         val dy: Int
         // 让a滑动到f点所在位置，留出1像素是为了防止当a和f重叠时出现View闪烁的情况
@@ -367,11 +367,12 @@ class DoraBookPager @JvmOverloads constructor(
                 } else if (x > viewWidth / 3 && x < viewWidth * 2 / 3 && y > viewHeight / 3 && y < viewHeight * 2 / 3) {
                     // 中间
                 }
+                return true
             }
             MotionEvent.ACTION_MOVE -> updateTouchPoint(event.x, event.y, style)
             MotionEvent.ACTION_UP -> startCancelAnimation()
         }
-        return true
+        return super.onTouchEvent(event)
     }
 
     private fun drawPathAContent(canvas: Canvas, pathA: Path) {
