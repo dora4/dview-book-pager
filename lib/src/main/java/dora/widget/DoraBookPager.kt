@@ -392,6 +392,11 @@ class DoraBookPager @JvmOverloads constructor(
             MotionEvent.ACTION_UP -> {
                 if (isDragging) {
                     isDragging = false
+                    if (style == DragStyle.DragLeft) {
+                        listener?.onPagePre()
+                    } else {
+                        listener?.onPageNext()
+                    }
                     return true
                 }
                 startCancelAnimation()
