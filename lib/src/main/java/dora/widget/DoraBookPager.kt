@@ -351,6 +351,8 @@ class DoraBookPager @JvmOverloads constructor(
             if (scroller.isFinished) {
                 resetPath()
             }
+            // 动画结束，确保状态复位
+            isDragging = false
         }
     }
 
@@ -376,6 +378,7 @@ class DoraBookPager @JvmOverloads constructor(
                     // 中间
                 }
                 isDragging = false
+                return true
             }
             MotionEvent.ACTION_MOVE -> {
                 val dx = event.x - downX
@@ -384,6 +387,7 @@ class DoraBookPager @JvmOverloads constructor(
                     isDragging = true
                 }
                 updateTouchPoint(event.x, event.y, style)
+                return true
             }
             MotionEvent.ACTION_UP -> {
                 if (isDragging) {
