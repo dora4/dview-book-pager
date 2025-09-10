@@ -155,21 +155,12 @@ class DoraBookPager @JvmOverloads constructor(
         drawableBBottomRight =
             GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, gradientColors)
         drawableBBottomRight.gradientType = GradientDrawable.LINEAR_GRADIENT
-        deepColor = 0x55333333
-        lightColor = 0x00333333
-        gradientColors = intArrayOf(lightColor, deepColor)
-//        drawableCTopRight =
-//            GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, gradientColors)
-//        drawableCTopRight.setGradientType(GradientDrawable.LINEAR_GRADIENT)
-//        drawableCBottomRight =
-//            GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, gradientColors)
-//        drawableCBottomRight.gradientType = GradientDrawable.LINEAR_GRADIENT
 
         drawableCTopRight =
-            GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(Color.WHITE, Color.WHITE))
+            GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(Color.WHITE, Color.LTGRAY))
         drawableCTopRight.setGradientType(GradientDrawable.LINEAR_GRADIENT)
         drawableCBottomRight =
-            GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, intArrayOf(Color.WHITE, Color.WHITE))
+            GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, intArrayOf(Color.LTGRAY, Color.WHITE))
         drawableCBottomRight.gradientType = GradientDrawable.LINEAR_GRADIENT
     }
 
