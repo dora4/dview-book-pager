@@ -166,10 +166,10 @@ class DoraBookPager @JvmOverloads constructor(
 //        drawableCBottomRight.gradientType = GradientDrawable.LINEAR_GRADIENT
 
         drawableCTopRight =
-            GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(Color.WHITE))
+            GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(Color.WHITE, Color.WHITE))
         drawableCTopRight.setGradientType(GradientDrawable.LINEAR_GRADIENT)
         drawableCBottomRight =
-            GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, intArrayOf(Color.WHITE))
+            GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, intArrayOf(Color.WHITE, Color.WHITE))
         drawableCBottomRight.gradientType = GradientDrawable.LINEAR_GRADIENT
     }
 
@@ -385,7 +385,6 @@ class DoraBookPager @JvmOverloads constructor(
                     // 中间
                 }
                 isDragging = false
-                return true
             }
             MotionEvent.ACTION_MOVE -> {
                 val dx = event.x - downX
@@ -394,7 +393,6 @@ class DoraBookPager @JvmOverloads constructor(
                     isDragging = true
                 }
                 updateTouchPoint(event.x, event.y, style)
-                return true
             }
             MotionEvent.ACTION_UP -> {
                 if (isDragging) {
