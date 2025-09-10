@@ -28,15 +28,15 @@ class DoraBookPager @JvmOverloads constructor(
     var pathCText: String = ""
 
     private val pathAPaint = Paint().apply {
-        color = Color.GREEN
+        color = Color.LTGRAY
         isAntiAlias = true
     }
     private val pathBPaint = Paint().apply {
-        color = Color.BLUE
+        color = Color.LTGRAY
         isAntiAlias = true
     }
     private val pathCPaint = Paint().apply {
-        color = Color.YELLOW
+        color = Color.WHITE
         isAntiAlias = true
     }
     private val textPaint = Paint().apply {
@@ -218,7 +218,7 @@ class DoraBookPager @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        canvas.drawColor(Color.YELLOW)
+        canvas.drawColor(Color.LTGRAY)
         if (a.x == -1f && a.y == -1f) {
             drawPathAContent(canvas, getPathDefault())
         } else {
@@ -274,7 +274,6 @@ class DoraBookPager @JvmOverloads constructor(
         val w1 = abs((f.x - a.x).toDouble()).toFloat()
         val w2 = viewWidth * w1 / w0
         a.x = abs((f.x - w2).toDouble()).toFloat()
-
         val h1 = abs((f.y - a.y).toDouble()).toFloat()
         val h2 = w2 * h1 / w1
         a.y = abs((f.y - h2).toDouble()).toFloat()
@@ -341,7 +340,7 @@ class DoraBookPager @JvmOverloads constructor(
             } else {
                 updateTouchPoint(x, y, DragStyle.DragBottomRight)
             }
-            if (scroller.finalX.toFloat() == x && scroller.finalY.toFloat() == y) {
+            if (scroller.isFinished) {
                 resetPath()
             }
         }
@@ -532,7 +531,7 @@ class DoraBookPager @JvmOverloads constructor(
         matrix.preTranslate(-e.x, -e.y)
         matrix.postTranslate(e.x, e.y)
         canvas.drawBitmap(pathCContentBitmap, matrix, null)
-//        drawPathCShadow(canvas)
+        drawPathCShadow(canvas)
         canvas.restore()
     }
 
