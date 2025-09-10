@@ -79,17 +79,17 @@ class DoraBookPager @JvmOverloads constructor(
     private var style: DragStyle = DragStyle.DragBottomRight
 
     private lateinit var drawableLeftTopRight: GradientDrawable
-    private lateinit var drawableLeftLowerRight: GradientDrawable
+    private lateinit var drawableLeftBottomRight: GradientDrawable
 
     private lateinit var drawableRightTopRight: GradientDrawable
-    private lateinit var drawableRightLowerRight: GradientDrawable
-    private lateinit var drawableHorizontalLowerRight: GradientDrawable
+    private lateinit var drawableRightBottomRight: GradientDrawable
+    private lateinit var drawableHorizontalBottomRight: GradientDrawable
 
     private lateinit var drawableBTopRight: GradientDrawable
-    private lateinit var drawableBLowerRight: GradientDrawable
+    private lateinit var drawableBBottomRight: GradientDrawable
 
     private lateinit var drawableCTopRight: GradientDrawable
-    private lateinit var drawableCLowerRight: GradientDrawable
+    private lateinit var drawableCBottomRight: GradientDrawable
 
     private lateinit var pathAContentBitmap: Bitmap
     private lateinit var pathBContentBitmap: Bitmap
@@ -128,42 +128,49 @@ class DoraBookPager @JvmOverloads constructor(
         drawableLeftTopRight =
             GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, gradientColors)
         drawableLeftTopRight.setGradientType(GradientDrawable.LINEAR_GRADIENT)
-        drawableLeftLowerRight =
+        drawableLeftBottomRight =
             GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, gradientColors)
-        drawableLeftLowerRight.setGradientType(GradientDrawable.LINEAR_GRADIENT)
+        drawableLeftBottomRight.setGradientType(GradientDrawable.LINEAR_GRADIENT)
         deepColor = 0x22333333
         lightColor = 0x01333333
         gradientColors = intArrayOf(deepColor, lightColor, lightColor)
         drawableRightTopRight =
             GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP, gradientColors)
         drawableRightTopRight.setGradientType(GradientDrawable.LINEAR_GRADIENT)
-        drawableRightLowerRight =
+        drawableRightBottomRight =
             GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, gradientColors)
-        drawableRightLowerRight.gradientType = GradientDrawable.LINEAR_GRADIENT
+        drawableRightBottomRight.gradientType = GradientDrawable.LINEAR_GRADIENT
         deepColor = 0x44333333
         lightColor = 0x01333333
         gradientColors = intArrayOf(lightColor, deepColor)
-        drawableHorizontalLowerRight =
+        drawableHorizontalBottomRight =
             GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, gradientColors)
-        drawableHorizontalLowerRight.setGradientType(GradientDrawable.LINEAR_GRADIENT)
+        drawableHorizontalBottomRight.setGradientType(GradientDrawable.LINEAR_GRADIENT)
         deepColor = 0x55111111
         lightColor = 0x00111111
         gradientColors = intArrayOf(deepColor, lightColor)
         drawableBTopRight =
             GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, gradientColors)
         drawableBTopRight.setGradientType(GradientDrawable.LINEAR_GRADIENT)
-        drawableBLowerRight =
+        drawableBBottomRight =
             GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, gradientColors)
-        drawableBLowerRight.gradientType = GradientDrawable.LINEAR_GRADIENT
+        drawableBBottomRight.gradientType = GradientDrawable.LINEAR_GRADIENT
         deepColor = 0x55333333
         lightColor = 0x00333333
         gradientColors = intArrayOf(lightColor, deepColor)
+//        drawableCTopRight =
+//            GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, gradientColors)
+//        drawableCTopRight.setGradientType(GradientDrawable.LINEAR_GRADIENT)
+//        drawableCBottomRight =
+//            GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, gradientColors)
+//        drawableCBottomRight.gradientType = GradientDrawable.LINEAR_GRADIENT
+
         drawableCTopRight =
-            GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, gradientColors)
+            GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(Color.WHITE))
         drawableCTopRight.setGradientType(GradientDrawable.LINEAR_GRADIENT)
-        drawableCLowerRight =
-            GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, gradientColors)
-        drawableCLowerRight.gradientType = GradientDrawable.LINEAR_GRADIENT
+        drawableCBottomRight =
+            GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, intArrayOf(Color.WHITE))
+        drawableCBottomRight.gradientType = GradientDrawable.LINEAR_GRADIENT
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -435,7 +442,7 @@ class DoraBookPager @JvmOverloads constructor(
             left = (e.x - lPathAShadowDis / 2).toInt()
             right = (e.x).toInt()
         } else {
-            gradientDrawable = drawableLeftLowerRight
+            gradientDrawable = drawableLeftBottomRight
             left = (e.x).toInt()
             right = (e.x + lPathAShadowDis / 2).toInt()
         }
@@ -470,7 +477,7 @@ class DoraBookPager @JvmOverloads constructor(
             top = (h.y - rPathAShadowDis / 2).toInt()
             bottom = h.y.toInt()
         } else {
-            gradientDrawable = drawableRightLowerRight
+            gradientDrawable = drawableRightBottomRight
             top = h.y.toInt()
             bottom = (h.y + rPathAShadowDis / 2).toInt()
         }
@@ -499,7 +506,7 @@ class DoraBookPager @JvmOverloads constructor(
         val right = (a.x).toInt()
         val top = 0
         val bottom = viewHeight
-        val gradientDrawable = drawableHorizontalLowerRight
+        val gradientDrawable = drawableHorizontalBottomRight
         gradientDrawable.setBounds(left, top, right, bottom)
         val degrees =
             Math.toDegrees(atan2((f.x - a.x).toDouble(), (f.y - h.y).toDouble())).toFloat()
@@ -535,7 +542,7 @@ class DoraBookPager @JvmOverloads constructor(
             left = (c.x - deepOffset).toInt()
             right = (c.x + aTof / 4 + lightOffset).toInt()
         } else {
-            gradientDrawable = drawableBLowerRight
+            gradientDrawable = drawableBBottomRight
             left = (c.x - aTof / 4 - lightOffset).toInt()
             right = (c.x + deepOffset).toInt()
         }
@@ -588,7 +595,7 @@ class DoraBookPager @JvmOverloads constructor(
             left = (c.x - lightOffset).toInt()
             right = (c.x + minDisToControlPoint + deepOffset).toInt()
         } else {
-            gradientDrawable = drawableCLowerRight
+            gradientDrawable = drawableCBottomRight
             left = (c.x - minDisToControlPoint - deepOffset).toInt()
             right = (c.x + lightOffset).toInt()
         }
