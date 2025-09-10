@@ -170,7 +170,7 @@ class DoraBookPager @JvmOverloads constructor(
         pathBContentBitmap = Bitmap.createBitmap(viewWidth, viewHeight, Bitmap.Config.RGB_565);
         drawPathBContentBitmap(pathBContentBitmap, pathBPaint);
         pathCContentBitmap = Bitmap.createBitmap(viewWidth, viewHeight, Bitmap.Config.RGB_565);
-        drawPathCContentBitmap(pathCContentBitmap, pathCPaint);
+        drawPathAContentBitmap(pathCContentBitmap, pathCPaint);
     }
 
     private fun drawPathAContentBitmap(bitmap: Bitmap, pathPaint: Paint) {
@@ -218,7 +218,7 @@ class DoraBookPager @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        canvas.drawColor(Color.WHITE)
+        canvas.drawColor(Color.YELLOW)
         if (a.x == -1f && a.y == -1f) {
             drawPathAContent(canvas, getPathDefault())
         } else {
@@ -315,7 +315,6 @@ class DoraBookPager @JvmOverloads constructor(
                 }
                 postInvalidate()
             }
-            else -> {}
         }
     }
 
@@ -533,10 +532,9 @@ class DoraBookPager @JvmOverloads constructor(
         matrix.preTranslate(-e.x, -e.y)
         matrix.postTranslate(e.x, e.y)
         canvas.drawBitmap(pathCContentBitmap, matrix, null)
-        drawPathCShadow(canvas)
+//        drawPathCShadow(canvas)
         canvas.restore()
     }
-
 
     private fun drawPathCShadow(canvas: Canvas) {
         val deepOffset = 1
