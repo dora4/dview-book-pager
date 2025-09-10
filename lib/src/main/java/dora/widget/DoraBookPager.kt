@@ -1,6 +1,5 @@
 package dora.widget
 
-import android.R.attr
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -309,7 +308,7 @@ class DoraBookPager @JvmOverloads constructor(
                 f.x = viewWidth.toFloat()
                 f.y = viewHeight.toFloat()
                 calcXYPoints(a, f)
-                touchPoint = PagerPoint(attr.x.toFloat(), attr.y.toFloat())
+                touchPoint = PagerPoint(x, y)
                 if (calcCXPoints(touchPoint, f) < 0) {
                     calcPointAByTouchPoint()
                     calcXYPoints(a, f)
