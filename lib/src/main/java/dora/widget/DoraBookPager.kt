@@ -8,6 +8,11 @@ import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.drawable.GradientDrawable
+import android.os.Build
+import android.text.Layout
+import android.text.StaticLayout
+import android.text.TextDirectionHeuristics
+import android.text.TextPaint
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -24,9 +29,9 @@ class DoraBookPager @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
-    var pathAText: String = ""
-    var pathBText: String = ""
-    var pathCText: String = ""
+    private var pathAText: String = ""
+    private var pathBText: String = ""
+    private var pathCText: String = ""
 
     private val pathAPaint = Paint().apply {
         color = Color.LTGRAY
@@ -40,12 +45,13 @@ class DoraBookPager @JvmOverloads constructor(
         color = Color.WHITE
         isAntiAlias = true
     }
-    private val textPaint = Paint().apply {
+    private val textPaint = TextPaint().apply {
         color = Color.BLACK
         textAlign = Paint.Align.CENTER
         isSubpixelText = true
         textSize = 30f
     }
+
     /**
      * 是否是有力度的拖拽，触发翻页。
      */
@@ -69,8 +75,8 @@ class DoraBookPager @JvmOverloads constructor(
     private val pathA = Path()
     private val pathB = Path()
     private val pathC = Path()
-    var lPathAShadowDis: Float = 0f
-    var rPathAShadowDis: Float = 0f
+    private var lPathAShadowDis: Float = 0f
+    private var rPathAShadowDis: Float = 0f
     private val matrixArray = floatArrayOf(0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 1.0f)
     private var matrix = Matrix()
     private var defaultWidth = 600
@@ -124,6 +130,13 @@ class DoraBookPager @JvmOverloads constructor(
         touchSlop = ViewConfiguration.get(context).scaledTouchSlop
     }
 
+    fun updatePageText(aText: String, bText: String, cText: String) {
+        pathAText = aText
+        pathBText = bText
+        pathCText = cText
+        invalidate()
+    }
+
     private fun createGradientDrawable() {
         drawableLeftTopRight =
             GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(Color.WHITE, Color.LTGRAY))
@@ -172,37 +185,70 @@ class DoraBookPager @JvmOverloads constructor(
         drawPathCContentBitmap(pathCContentBitmap, pathCPaint);
     }
 
+    private fun createStaticLayout(text: String, paint: TextPaint, maxWidth: Int): StaticLayout {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            StaticLayout.Builder.obtain(text, 0, text.length, paint, maxWidth)
+                .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+                .setLineSpacing(0f, 1f)
+                .setIncludePad(false)
+                .setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NORMAL)
+                .setTextDirection(TextDirectionHeuristics.LTR)
+                .build()
+        } else {
+            @Suppress("DEPRECATION")
+            StaticLayout(
+                text, paint, maxWidth,
+                Layout.Alignment.ALIGN_NORMAL, 1f, 0f, false
+            )
+        }
+    }
+
     private fun drawPathAContentBitmap(bitmap: Bitmap, pathPaint: Paint) {
         val canvas = Canvas(bitmap)
         canvas.drawPath(getPathDefault(), pathPaint)
-        canvas.drawText(
-            pathAText,
-            (viewWidth - 260).toFloat(),
-            (viewHeight - 100).toFloat(),
-            textPaint
-        )
+        val paddingLeft = 20
+        val paddingRight = 20
+        val paddingBottom = 100
+        val maxTextWidth = viewWidth - paddingLeft - paddingRight
+        val layout = createStaticLayout(pathAText, textPaint, maxTextWidth)
+        val x = paddingLeft.toFloat()
+        val y = (viewHeight - paddingBottom - layout.height).toFloat()
+        canvas.save()
+        canvas.translate(x, y)
+        layout.draw(canvas)
+        canvas.restore()
     }
 
     private fun drawPathBContentBitmap(bitmap: Bitmap, pathPaint: Paint) {
         val canvas = Canvas(bitmap)
         canvas.drawPath(getPathDefault(), pathPaint)
-        canvas.drawText(
-            pathBText,
-            (viewWidth - 260).toFloat(),
-            (viewHeight - 100).toFloat(),
-            textPaint
-        )
+        val paddingLeft = 20
+        val paddingRight = 20
+        val paddingBottom = 100
+        val maxTextWidth = viewWidth - paddingLeft - paddingRight
+        val layout = createStaticLayout(pathBText, textPaint, maxTextWidth)
+        val x = paddingLeft.toFloat()
+        val y = (viewHeight - paddingBottom - layout.height).toFloat()
+        canvas.save()
+        canvas.translate(x, y)
+        layout.draw(canvas)
+        canvas.restore()
     }
 
     private fun drawPathCContentBitmap(bitmap: Bitmap, pathPaint: Paint) {
         val canvas = Canvas(bitmap)
         canvas.drawPath(getPathDefault(), pathPaint)
-        canvas.drawText(
-            pathCText,
-            (viewWidth - 260).toFloat(),
-            (viewHeight - 100).toFloat(),
-            textPaint
-        )
+        val paddingLeft = 20
+        val paddingRight = 20
+        val paddingBottom = 100
+        val maxTextWidth = viewWidth - paddingLeft - paddingRight
+        val layout = createStaticLayout(pathCText, textPaint, maxTextWidth)
+        val x = paddingLeft.toFloat()
+        val y = (viewHeight - paddingBottom - layout.height).toFloat()
+        canvas.save()
+        canvas.translate(x, y)
+        layout.draw(canvas)
+        canvas.restore()
     }
 
     private fun measureSize(defaultSize: Int, measureSpec: Int): Int {
@@ -319,7 +365,6 @@ class DoraBookPager @JvmOverloads constructor(
     private fun startCancelAnimation() {
         val dx: Int
         val dy: Int
-        // 让a滑动到f点所在位置，留出1像素是为了防止当a和f重叠时出现View闪烁的情况
         if (style == DragStyle.DragTopRight) {
             dx = (viewWidth - 1 - a.x).toInt()
             dy = (1 - a.y).toInt()
