@@ -85,7 +85,7 @@ class DoraBookPager @JvmOverloads constructor(
     private var viewHeight = 0
     private val scroller = Scroller(context, LinearInterpolator())
 
-    private var style: DragStyle = DragStyle.DragBottomRight
+    private var dragPoint: DragPoint = DragPoint.BottomRight
 
     private lateinit var drawableLeftTopRight: GradientDrawable
     private lateinit var drawableLeftBottomRight: GradientDrawable
@@ -110,12 +110,12 @@ class DoraBookPager @JvmOverloads constructor(
         createGradientDrawable()
     }
 
-    sealed class DragStyle(val dragPosition: Int) {
+    sealed class DragPoint(val dragPosition: Int) {
 
-        data object DragLeft : DragStyle(DRAG_LEFT)
-        data object DragRight : DragStyle(DRAG_RIGHT)
-        data object DragTopRight : DragStyle(DRAG_TOP_RIGHT)
-        data object DragBottomRight : DragStyle(DRAG_BOTTOM_RIGHT)
+        data object Left : DragPoint(DRAG_LEFT)
+        data object Right : DragPoint(DRAG_RIGHT)
+        data object TopRight : DragPoint(DRAG_TOP_RIGHT)
+        data object BottomRight : DragPoint(DRAG_BOTTOM_RIGHT)
 
         companion object {
             const val DRAG_LEFT = 0
@@ -324,13 +324,13 @@ class DoraBookPager @JvmOverloads constructor(
         a.y = abs((f.y - h2).toDouble()).toFloat()
     }
 
-    private fun updateTouchPoint(x: Float, y: Float, style: DragStyle) {
+    private fun updateTouchPoint(x: Float, y: Float, dragPoint: DragPoint) {
         val touchPoint: PagerPoint?
         a.x = x
         a.y = y
-        this.style = style
-        when (style) {
-            DragStyle.DragTopRight -> {
+        this.dragPoint = dragPoint
+        when (dragPoint) {
+            DragPoint.TopRight -> {
                 f.x = viewWidth.toFloat()
                 f.y = 0f
                 calcXYPoints(a, f)
@@ -341,14 +341,14 @@ class DoraBookPager @JvmOverloads constructor(
                 }
                 postInvalidate()
             }
-            DragStyle.DragLeft, DragStyle.DragRight -> {
+            DragPoint.Left, DragPoint.Right -> {
                 a.y = (viewHeight - 1).toFloat()
                 f.x = viewWidth.toFloat()
                 f.y = viewHeight.toFloat()
                 calcXYPoints(a, f)
                 postInvalidate()
             }
-            DragStyle.DragBottomRight -> {
+            DragPoint.BottomRight -> {
                 f.x = viewWidth.toFloat()
                 f.y = viewHeight.toFloat()
                 calcXYPoints(a, f)
@@ -365,7 +365,7 @@ class DoraBookPager @JvmOverloads constructor(
     private fun startCancelAnimation() {
         val dx: Int
         val dy: Int
-        if (style == DragStyle.DragTopRight) {
+        if (dragPoint == DragPoint.TopRight) {
             dx = (viewWidth - 1 - a.x).toInt()
             dy = (1 - a.y).toInt()
         } else {
@@ -379,10 +379,10 @@ class DoraBookPager @JvmOverloads constructor(
         if (scroller.computeScrollOffset()) {
             val x: Float = scroller.currX.toFloat()
             val y: Float = scroller.currY.toFloat()
-            if (style == DragStyle.DragTopRight) {
-                updateTouchPoint(x, y, DragStyle.DragTopRight)
+            if (dragPoint == DragPoint.TopRight) {
+                updateTouchPoint(x, y, DragPoint.TopRight)
             } else {
-                updateTouchPoint(x, y, DragStyle.DragBottomRight)
+                updateTouchPoint(x, y, DragPoint.BottomRight)
             }
             if (scroller.isFinished) {
                 resetDragPoint()
@@ -398,17 +398,17 @@ class DoraBookPager @JvmOverloads constructor(
                 downX = event.x
                 downY = event.y
                 if (downX <= viewWidth / 3) {
-                    style = DragStyle.DragLeft
-                    updateTouchPoint(downX, downY, style)
+                    dragPoint = DragPoint.Left
+                    updateTouchPoint(downX, downY, dragPoint)
                 } else if (downX > viewWidth / 3 && downY <= viewHeight / 3) {
-                    style = DragStyle.DragTopRight
-                    updateTouchPoint(downX, downY, style)
+                    dragPoint = DragPoint.TopRight
+                    updateTouchPoint(downX, downY, dragPoint)
                 } else if (downX > viewWidth * 2 / 3 && downY > viewHeight / 3 && downY <= viewHeight * 2 / 3) {
-                    style = DragStyle.DragRight
-                    updateTouchPoint(downX, downY, style)
+                    dragPoint = DragPoint.Right
+                    updateTouchPoint(downX, downY, dragPoint)
                 } else if (downX > viewWidth / 3 && downY > viewHeight * 2 / 3) {
-                    style = DragStyle.DragBottomRight
-                    updateTouchPoint(downX, downY, style)
+                    dragPoint = DragPoint.BottomRight
+                    updateTouchPoint(downX, downY, dragPoint)
                 } else if (downX > viewWidth / 3 && downX < viewWidth * 2 / 3 && downY > viewHeight / 3 && downY < viewHeight * 2 / 3) {
                     // 拖拽中间，暂不作处理
                 }
@@ -421,14 +421,14 @@ class DoraBookPager @JvmOverloads constructor(
                 if (!isStrongDrag && hypot(dx, dy) > touchSlop * 8) {
                     isStrongDrag = true
                 }
-                updateTouchPoint(event.x, event.y, style)
+                updateTouchPoint(event.x, event.y, dragPoint)
                 return true
             }
             MotionEvent.ACTION_UP -> {
                 if (isStrongDrag) {
                     isStrongDrag = false
                     startCancelAnimation()
-                    if (style == DragStyle.DragLeft) {
+                    if (dragPoint == DragPoint.Left) {
                         listener?.onPagePre()
                     } else {
                         listener?.onPageNext()
@@ -449,7 +449,7 @@ class DoraBookPager @JvmOverloads constructor(
         temp.op(pathA, Path.Op.INTERSECT)
         canvas.clipPath(temp)
         canvas.drawBitmap(pathAContentBitmap, 0f, 0f, null)
-        if (style == DragStyle.DragLeft || style == DragStyle.DragRight) {
+        if (dragPoint == DragPoint.Left || dragPoint == DragPoint.Right) {
             drawPathAHorizontalShadow(canvas, pathA)
         } else {
             drawPathALeftShadow(canvas, pathA)
@@ -466,7 +466,7 @@ class DoraBookPager @JvmOverloads constructor(
         val top = e.y.toInt()
         val bottom = (e.y + viewHeight).toInt()
         val gradientDrawable: GradientDrawable
-        if (style == DragStyle.DragTopRight) {
+        if (dragPoint == DragPoint.TopRight) {
             gradientDrawable = drawableLeftTopRight
             left = (e.x - lPathAShadowDis / 2).toInt()
             right = (e.x).toInt()
@@ -501,7 +501,7 @@ class DoraBookPager @JvmOverloads constructor(
         val top: Int
         val bottom: Int
         val gradientDrawable: GradientDrawable
-        if (style == DragStyle.DragTopRight) {
+        if (dragPoint == DragPoint.TopRight) {
             gradientDrawable = drawableRightTopRight
             top = (h.y - rPathAShadowDis / 2).toInt()
             bottom = h.y.toInt()
@@ -547,10 +547,19 @@ class DoraBookPager @JvmOverloads constructor(
         canvas.save()
         val pathB = getPathB()
         val pathC = getPathC()
-        val clipPath = Path(pathC)
-        clipPath.op(pathB, Path.Op.UNION)
-        clipPath.op(pathA, Path.Op.DIFFERENCE)
-        canvas.clipPath(clipPath)
+        // A ∪ C
+        val unionAC = Path(pathA).apply {
+            op(pathC, Path.Op.UNION)
+        }
+        // B - (A ∪ C)
+        val diffB = Path(pathB).apply {
+            op(unionAC, Path.Op.DIFFERENCE)
+        }
+        // 最终 clip = (A ∪ C) ∩ diffB
+        val finalClip = Path(unionAC).apply {
+            op(diffB, Path.Op.INTERSECT)
+        }
+        canvas.clipPath(finalClip)
         canvas.drawBitmap(pathBContentBitmap, 0f, 0f, null)
         drawPathBShadow(canvas)
         canvas.restore()
@@ -566,7 +575,7 @@ class DoraBookPager @JvmOverloads constructor(
         val top = c.y.toInt()
         val bottom = (viewDiagonalLength + c.y).toInt()
         val gradientDrawable: GradientDrawable
-        if (style == DragStyle.DragTopRight) {
+        if (dragPoint == DragPoint.TopRight) {
             gradientDrawable = drawableBTopRight
             left = (c.x - deepOffset).toInt()
             right = (c.x + aTof / 4 + lightOffset).toInt()
@@ -619,7 +628,7 @@ class DoraBookPager @JvmOverloads constructor(
         val top = c.y.toInt()
         val bottom = (viewDiagonalLength + c.y).toInt()
         val gradientDrawable: GradientDrawable
-        if (style == DragStyle.DragTopRight) {
+        if (dragPoint == DragPoint.TopRight) {
             gradientDrawable = drawableCTopRight
             left = (c.x - lightOffset).toInt()
             right = (c.x + minDisToControlPoint + deepOffset).toInt()
