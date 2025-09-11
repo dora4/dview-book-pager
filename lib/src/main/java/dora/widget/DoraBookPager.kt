@@ -46,7 +46,10 @@ class DoraBookPager @JvmOverloads constructor(
         isSubpixelText = true
         textSize = 30f
     }
-    private var isDragging = false
+    /**
+     * 是否是有力度的拖拽，触发翻页。
+     */
+    private var isStrongDrag = false
     private var touchSlop = 10
     private var downX = 0f
     private var downY = 0f
@@ -337,10 +340,10 @@ class DoraBookPager @JvmOverloads constructor(
                 updateTouchPoint(x, y, DragStyle.DragBottomRight)
             }
             if (scroller.isFinished) {
-                resetPath()
+                resetDragPoint()
             }
             // 动画结束，确保状态复位
-            isDragging = false
+            isStrongDrag = false
         }
     }
 
@@ -362,23 +365,24 @@ class DoraBookPager @JvmOverloads constructor(
                     style = DragStyle.DragBottomRight
                     updateTouchPoint(downX, downY, style)
                 } else if (downX > viewWidth / 3 && downX < viewWidth * 2 / 3 && downY > viewHeight / 3 && downY < viewHeight * 2 / 3) {
-                    // 中间
+                    // 拖拽中间，暂不作处理
                 }
-                isDragging = false
+                isStrongDrag = false
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
                 val dx = event.x - downX
                 val dy = event.y - downY
-                if (!isDragging && hypot(dx, dy) > touchSlop) {
-                    isDragging = true
+                if (!isStrongDrag && hypot(dx, dy) > touchSlop * 8) {
+                    isStrongDrag = true
                 }
                 updateTouchPoint(event.x, event.y, style)
                 return true
             }
             MotionEvent.ACTION_UP -> {
-                if (isDragging) {
-                    isDragging = false
+                if (isStrongDrag) {
+                    isStrongDrag = false
+                    startCancelAnimation()
                     if (style == DragStyle.DragLeft) {
                         listener?.onPagePre()
                     } else {
@@ -676,7 +680,7 @@ class DoraBookPager @JvmOverloads constructor(
         return PagerPoint(px, py)
     }
 
-    fun resetPath() {
+    private fun resetDragPoint() {
         a.x = -1f
         a.y = -1f
         postInvalidate()
