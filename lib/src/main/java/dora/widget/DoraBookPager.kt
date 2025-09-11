@@ -92,8 +92,9 @@ class DoraBookPager @JvmOverloads constructor(
     private var viewWidth = 0
     private var viewHeight = 0
     private var pageFlipDuration = 400
-    private var frontColor = Color.WHITE
-    private var backColor = Color.LTGRAY
+    private var frontColor = Color.LTGRAY
+    private var backColor = Color.WHITE
+    private var shadowColor = Color.LTGRAY
     private val scroller = Scroller(context, LinearInterpolator())
 
     private var dragPoint: DragPoint = DragPoint.BottomRight
@@ -176,32 +177,32 @@ class DoraBookPager @JvmOverloads constructor(
 
     private fun createGradientDrawable() {
         drawableLeftTopRight =
-            GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(frontColor, backColor))
+            GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(backColor, shadowColor))
         drawableLeftTopRight.setGradientType(GradientDrawable.LINEAR_GRADIENT)
         drawableLeftBottomRight =
-            GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, intArrayOf(backColor, frontColor))
+            GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, intArrayOf(shadowColor, backColor))
         drawableLeftBottomRight.setGradientType(GradientDrawable.LINEAR_GRADIENT)
         drawableRightTopRight =
-            GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP, intArrayOf(frontColor, backColor))
+            GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP, intArrayOf(backColor, shadowColor))
         drawableRightTopRight.setGradientType(GradientDrawable.LINEAR_GRADIENT)
         drawableRightBottomRight =
-            GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(backColor, frontColor))
+            GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(shadowColor, backColor))
         drawableRightBottomRight.gradientType = GradientDrawable.LINEAR_GRADIENT
         drawableHorizontalBottomRight =
-            GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(frontColor, backColor))
+            GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(backColor, shadowColor))
         drawableHorizontalBottomRight.setGradientType(GradientDrawable.LINEAR_GRADIENT)
         drawableBTopRight =
-            GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(frontColor, backColor))
+            GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(backColor, shadowColor))
         drawableBTopRight.setGradientType(GradientDrawable.LINEAR_GRADIENT)
         drawableBBottomRight =
-            GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, intArrayOf(backColor, frontColor))
+            GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, intArrayOf(shadowColor, backColor))
         drawableBBottomRight.gradientType = GradientDrawable.LINEAR_GRADIENT
 
         drawableCTopRight =
-            GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(frontColor, backColor))
+            GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(backColor, shadowColor))
         drawableCTopRight.setGradientType(GradientDrawable.LINEAR_GRADIENT)
         drawableCBottomRight =
-            GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, intArrayOf(backColor, frontColor))
+            GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, intArrayOf(shadowColor, backColor))
         drawableCBottomRight.gradientType = GradientDrawable.LINEAR_GRADIENT
     }
 
