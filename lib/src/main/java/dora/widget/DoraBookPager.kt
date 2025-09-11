@@ -19,6 +19,7 @@ import android.view.View
 import android.view.ViewConfiguration
 import android.view.animation.LinearInterpolator
 import android.widget.Scroller
+import dora.widget.bookpager.R
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.hypot
@@ -29,20 +30,18 @@ class DoraBookPager @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
-    private var pathAText: String = ""
-    private var pathBText: String = ""
-    private var pathCText: String = ""
-
+    private var pages: List<String> = emptyList()   // 所有页文字
+    private var currentPageIndex = 0                // 当前页索引
     private val pathAPaint = Paint().apply {
-        color = Color.LTGRAY
+        color = Color.WHITE
         isAntiAlias = true
     }
     private val pathBPaint = Paint().apply {
-        color = Color.LTGRAY
+        color = Color.WHITE
         isAntiAlias = true
     }
     private val pathCPaint = Paint().apply {
-        color = Color.WHITE
+        color = Color.LTGRAY
         isAntiAlias = true
     }
     private val textPaint = TextPaint().apply {
@@ -56,6 +55,18 @@ class DoraBookPager @JvmOverloads constructor(
      * 是否是有力度的拖拽，触发翻页。
      */
     private var isStrongDrag = false
+    private var isLongPress = false
+    private var totalDragDistance = 0f
+
+    private val longPressRunnable = Runnable {
+        // 拖拽不够强时触发取消动画
+        if (!isStrongDrag) {
+            isLongPress = true
+            startCancelAnimation()
+            listener?.onPageCancel()
+        }
+    }
+
     private var touchSlop = 10
     private var downX = 0f
     private var downY = 0f
@@ -83,6 +94,9 @@ class DoraBookPager @JvmOverloads constructor(
     private var defaultHeight = 1000
     private var viewWidth = 0
     private var viewHeight = 0
+    private var pageFlipDuration = 400
+    private var frontColor = Color.WHITE
+    private var backColor = Color.LTGRAY
     private val scroller = Scroller(context, LinearInterpolator())
 
     private var dragPoint: DragPoint = DragPoint.BottomRight
@@ -107,15 +121,31 @@ class DoraBookPager @JvmOverloads constructor(
     private var listener: OnPageChangeListener? = null
 
     init {
+        // 读取自定义属性
+        attrs?.let {
+            val typedArray = context.obtainStyledAttributes(it, R.styleable.DoraBookPager, defStyleAttr, 0)
+            try {
+                // 翻页动画时长
+                pageFlipDuration = typedArray.getInt(R.styleable.DoraBookPager_dview_bp_duration, pageFlipDuration)
+                // 纸张正面颜色
+                frontColor = typedArray.getColor(R.styleable.DoraBookPager_dview_bp_pagerFrontColor, frontColor)
+                pathAPaint.color = frontColor
+                // 纸张背面颜色
+                backColor = typedArray.getColor(R.styleable.DoraBookPager_dview_bp_pagerBackColor, backColor)
+                pathBPaint.color = backColor
+            } finally {
+                typedArray.recycle()
+            }
+        }
         createGradientDrawable()
     }
 
     sealed class DragPoint(val dragPosition: Int) {
 
-        data object Left : DragPoint(DRAG_LEFT)
-        data object Right : DragPoint(DRAG_RIGHT)
-        data object TopRight : DragPoint(DRAG_TOP_RIGHT)
-        data object BottomRight : DragPoint(DRAG_BOTTOM_RIGHT)
+        object Left : DragPoint(DRAG_LEFT)
+        object Right : DragPoint(DRAG_RIGHT)
+        object TopRight : DragPoint(DRAG_TOP_RIGHT)
+        object BottomRight : DragPoint(DRAG_BOTTOM_RIGHT)
 
         companion object {
             const val DRAG_LEFT = 0
@@ -130,41 +160,50 @@ class DoraBookPager @JvmOverloads constructor(
         touchSlop = ViewConfiguration.get(context).scaledTouchSlop
     }
 
-    fun updatePageText(aText: String, bText: String, cText: String) {
-        pathAText = aText
-        pathBText = bText
-        pathCText = cText
+    fun setPages(pages: List<String>) {
+        this.pages = pages
+        currentPageIndex = 0
         invalidate()
+    }
+
+    fun updatePageText(pageIndex: Int, text: String) {
+        if (pages.isEmpty() || pageIndex !in pages.indices) return
+        val mutablePages = pages.toMutableList()
+        mutablePages[pageIndex] = text
+        pages = mutablePages
+        if (pageIndex == currentPageIndex) {
+            invalidate()
+        }
     }
 
     private fun createGradientDrawable() {
         drawableLeftTopRight =
-            GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(Color.WHITE, Color.LTGRAY))
+            GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(backColor, frontColor))
         drawableLeftTopRight.setGradientType(GradientDrawable.LINEAR_GRADIENT)
         drawableLeftBottomRight =
-            GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, intArrayOf(Color.LTGRAY, Color.WHITE))
+            GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, intArrayOf(frontColor, backColor))
         drawableLeftBottomRight.setGradientType(GradientDrawable.LINEAR_GRADIENT)
         drawableRightTopRight =
-            GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP, intArrayOf(Color.WHITE, Color.LTGRAY))
+            GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP, intArrayOf(backColor, frontColor))
         drawableRightTopRight.setGradientType(GradientDrawable.LINEAR_GRADIENT)
         drawableRightBottomRight =
-            GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(Color.LTGRAY, Color.WHITE))
+            GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(frontColor, backColor))
         drawableRightBottomRight.gradientType = GradientDrawable.LINEAR_GRADIENT
         drawableHorizontalBottomRight =
-            GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(Color.WHITE, Color.LTGRAY))
+            GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(backColor, frontColor))
         drawableHorizontalBottomRight.setGradientType(GradientDrawable.LINEAR_GRADIENT)
         drawableBTopRight =
-            GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(Color.WHITE, Color.LTGRAY))
+            GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(backColor, frontColor))
         drawableBTopRight.setGradientType(GradientDrawable.LINEAR_GRADIENT)
         drawableBBottomRight =
-            GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, intArrayOf(Color.LTGRAY, Color.WHITE))
+            GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, intArrayOf(frontColor, backColor))
         drawableBBottomRight.gradientType = GradientDrawable.LINEAR_GRADIENT
 
         drawableCTopRight =
-            GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(Color.WHITE, Color.LTGRAY))
+            GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(backColor, frontColor))
         drawableCTopRight.setGradientType(GradientDrawable.LINEAR_GRADIENT)
         drawableCBottomRight =
-            GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, intArrayOf(Color.LTGRAY, Color.WHITE))
+            GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, intArrayOf(frontColor, backColor))
         drawableCBottomRight.gradientType = GradientDrawable.LINEAR_GRADIENT
     }
 
@@ -203,16 +242,38 @@ class DoraBookPager @JvmOverloads constructor(
         }
     }
 
+    private fun goToNextPage() {
+        if (currentPageIndex < pages.size - 1) {
+            currentPageIndex++
+            startNextPageAnimation()
+        } else {
+            // 已是最后一页，可取消或回到第一页
+            startCancelAnimation()
+            listener?.onLastPage()
+        }
+    }
+
+    private fun goToPrePage() {
+        if (currentPageIndex > 0) {
+            currentPageIndex--
+            startPrePageAnimation()
+        } else {
+            startCancelAnimation()
+            listener?.onFirstPage()
+        }
+    }
+
     private fun drawPathAContentBitmap(bitmap: Bitmap, pathPaint: Paint) {
         val canvas = Canvas(bitmap)
         canvas.drawPath(getPathDefault(), pathPaint)
-        val paddingLeft = 20
-        val paddingRight = 20
-        val paddingBottom = 100
+        val text = pages.getOrNull(currentPageIndex) ?: ""
+        val paddingLeft = 100
+        val paddingTop = 100
+        val paddingRight = 100
         val maxTextWidth = viewWidth - paddingLeft - paddingRight
-        val layout = createStaticLayout(pathAText, textPaint, maxTextWidth)
-        val x = paddingLeft.toFloat()
-        val y = (viewHeight - paddingBottom - layout.height).toFloat()
+        val layout = createStaticLayout(text, textPaint, maxTextWidth)
+        val x = (viewWidth + maxTextWidth - layout.width) / 2f
+        val y = paddingTop.toFloat()
         canvas.save()
         canvas.translate(x, y)
         layout.draw(canvas)
@@ -222,13 +283,14 @@ class DoraBookPager @JvmOverloads constructor(
     private fun drawPathBContentBitmap(bitmap: Bitmap, pathPaint: Paint) {
         val canvas = Canvas(bitmap)
         canvas.drawPath(getPathDefault(), pathPaint)
-        val paddingLeft = 20
-        val paddingRight = 20
-        val paddingBottom = 100
+        val text = pages.getOrNull(currentPageIndex + 1) ?: ""
+        val paddingLeft = 100
+        val paddingTop = 100
+        val paddingRight = 100
         val maxTextWidth = viewWidth - paddingLeft - paddingRight
-        val layout = createStaticLayout(pathBText, textPaint, maxTextWidth)
-        val x = paddingLeft.toFloat()
-        val y = (viewHeight - paddingBottom - layout.height).toFloat()
+        val layout = createStaticLayout(text, textPaint, maxTextWidth)
+        val x = (viewWidth + maxTextWidth - layout.width) / 2f
+        val y = paddingTop.toFloat()
         canvas.save()
         canvas.translate(x, y)
         layout.draw(canvas)
@@ -238,13 +300,14 @@ class DoraBookPager @JvmOverloads constructor(
     private fun drawPathCContentBitmap(bitmap: Bitmap, pathPaint: Paint) {
         val canvas = Canvas(bitmap)
         canvas.drawPath(getPathDefault(), pathPaint)
-        val paddingLeft = 20
-        val paddingRight = 20
-        val paddingBottom = 100
+        val text = ""   // 暂且先不画背面文字
+        val paddingLeft = 100
+        val paddingTop = 100
+        val paddingRight = 100
         val maxTextWidth = viewWidth - paddingLeft - paddingRight
-        val layout = createStaticLayout(pathCText, textPaint, maxTextWidth)
-        val x = paddingLeft.toFloat()
-        val y = (viewHeight - paddingBottom - layout.height).toFloat()
+        val layout = createStaticLayout(text, textPaint, maxTextWidth)
+        val x = (viewWidth + maxTextWidth - layout.width) / 2f
+        val y = paddingTop.toFloat()
         canvas.save()
         canvas.translate(x, y)
         layout.draw(canvas)
@@ -331,15 +394,16 @@ class DoraBookPager @JvmOverloads constructor(
         this.dragPoint = dragPoint
         when (dragPoint) {
             DragPoint.TopRight -> {
-                f.x = viewWidth.toFloat()
-                f.y = 0f
-                calcXYPoints(a, f)
-                touchPoint = PagerPoint(x, y)
-                if (calcCXPoints(touchPoint, f) < 0) {
-                    calcPointAByTouchPoint()
-                    calcXYPoints(a, f)
-                }
-                postInvalidate()
+                // 暂不处理
+//                f.x = viewWidth.toFloat()
+//                f.y = 0f
+//                calcXYPoints(a, f)
+//                touchPoint = PagerPoint(x, y)
+//                if (calcCXPoints(touchPoint, f) < 0) {
+//                    calcPointAByTouchPoint()
+//                    calcXYPoints(a, f)
+//                }
+//                postInvalidate()
             }
             DragPoint.Left, DragPoint.Right -> {
                 a.y = (viewHeight - 1).toFloat()
@@ -360,6 +424,27 @@ class DoraBookPager @JvmOverloads constructor(
                 postInvalidate()
             }
         }
+    }
+
+    private fun startPrePageAnimation() {
+        val targetX = 0
+        val targetY = viewHeight
+        scroller.startScroll(a.x.toInt(), a.y.toInt(), targetX - a.x.toInt(), targetY - a.y.toInt(), 400)
+        listener?.onPagePre()
+    }
+
+    private fun startNextPageAnimation() {
+        val targetX: Int
+        val targetY: Int
+        if (dragPoint == DragPoint.TopRight) {
+            targetX = viewWidth
+            targetY = 0
+        } else {
+            targetX = viewWidth
+            targetY = viewHeight
+        }
+        scroller.startScroll(a.x.toInt(), a.y.toInt(), targetX - a.x.toInt(), targetY - a.y.toInt(), 400)
+        listener?.onPageNext()
     }
 
     private fun startCancelAnimation() {
@@ -409,34 +494,51 @@ class DoraBookPager @JvmOverloads constructor(
                 } else if (downX > viewWidth / 3 && downY > viewHeight * 2 / 3) {
                     dragPoint = DragPoint.BottomRight
                     updateTouchPoint(downX, downY, dragPoint)
-                } else if (downX > viewWidth / 3 && downX < viewWidth * 2 / 3 && downY > viewHeight / 3 && downY < viewHeight * 2 / 3) {
-                    // 拖拽中间，暂不作处理
                 }
                 isStrongDrag = false
+                isLongPress = false
+
+                // 启动长按检测
+                postDelayed(longPressRunnable, ViewConfiguration.getLongPressTimeout().toLong())
+
                 return true
             }
+
             MotionEvent.ACTION_MOVE -> {
                 val dx = event.x - downX
                 val dy = event.y - downY
-                if (!isStrongDrag && hypot(dx, dy) > touchSlop * 8) {
+                val distance = hypot(dx, dy)
+                totalDragDistance = distance
+
+                if (!isStrongDrag && distance > touchSlop * 8) {
                     isStrongDrag = true
+                    // 不再 removeCallbacks(longPressRunnable)
+                    // 长按仍然有效，只是拖拽距离大，触发翻页动画时会判断
+                    listener?.onPageNext()
+                    goToNextPage()
                 }
+
                 updateTouchPoint(event.x, event.y, dragPoint)
-                return true
             }
-            MotionEvent.ACTION_UP -> {
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                removeCallbacks(longPressRunnable)
                 if (isStrongDrag) {
-                    isStrongDrag = false
-                    startCancelAnimation()
+                    // 执行翻页动画
                     if (dragPoint == DragPoint.Left) {
-                        listener?.onPagePre()
+                        goToPrePage()
                     } else {
                         listener?.onPageNext()
+                        goToNextPage()
                     }
-                    return true
+                } else {
+                    // 拖拽不足或长按 → 执行取消动画
+                    startCancelAnimation()
+                    listener?.onPageCancel()
                 }
-                startCancelAnimation()
-                listener?.onPageCancel()
+
+                isStrongDrag = false
+                isLongPress = false
+                totalDragDistance = 0f
                 return true
             }
         }
@@ -445,15 +547,19 @@ class DoraBookPager @JvmOverloads constructor(
 
     private fun drawPathAContent(canvas: Canvas, pathA: Path) {
         canvas.save()
-        val temp = Path(pathA)
-        temp.op(pathA, Path.Op.INTERSECT)
-        canvas.clipPath(temp)
+        val clipPath = Path(pathA)
+        clipPath.op(pathA, Path.Op.INTERSECT)
+        canvas.clipPath(clipPath)
         canvas.drawBitmap(pathAContentBitmap, 0f, 0f, null)
         if (dragPoint == DragPoint.Left || dragPoint == DragPoint.Right) {
             drawPathAHorizontalShadow(canvas, pathA)
         } else {
-            drawPathALeftShadow(canvas, pathA)
-            drawPathARightShadow(canvas, pathA)
+            if (dragPoint == DragPoint.BottomRight) {
+                drawPathALeftShadow(canvas, pathA)
+                drawPathARightShadow(canvas, pathA)
+            } else if (dragPoint == DragPoint.TopRight) {
+                // 暂不处理
+            }
         }
         canvas.restore()
     }
@@ -481,9 +587,9 @@ class DoraBookPager @JvmOverloads constructor(
         path.lineTo(e.x, e.y)
         path.lineTo(a.x, a.y)
         path.close()
-        val temp = Path(path)
-        temp.op(pathA, Path.Op.INTERSECT)
-        canvas.clipPath(temp)
+        val clipPath = Path(path)
+        clipPath.op(pathA, Path.Op.INTERSECT)
+        canvas.clipPath(clipPath)
         val degrees =
             Math.toDegrees(atan2((e.x - a.x).toDouble(), (a.y - e.y).toDouble())).toFloat()
         canvas.rotate(degrees, e.x, e.y)
@@ -516,9 +622,9 @@ class DoraBookPager @JvmOverloads constructor(
         path.lineTo(h.x, h.y)
         path.lineTo(a.x, a.y)
         path.close()
-        val temp = Path(path)
-        temp.op(pathA, Path.Op.INTERSECT)
-        canvas.clipPath(temp)
+        val clipPath = Path(path)
+        clipPath.op(pathA, Path.Op.INTERSECT)
+        canvas.clipPath(clipPath)
         val degrees =
             Math.toDegrees(atan2((a.y - h.y).toDouble(), (a.x - h.x).toDouble())).toFloat()
         canvas.rotate(degrees, h.x, h.y)
@@ -547,19 +653,10 @@ class DoraBookPager @JvmOverloads constructor(
         canvas.save()
         val pathB = getPathB()
         val pathC = getPathC()
-        // A ∪ C
-        val unionAC = Path(pathA).apply {
-            op(pathC, Path.Op.UNION)
-        }
-        // B - (A ∪ C)
-        val diffB = Path(pathB).apply {
-            op(unionAC, Path.Op.DIFFERENCE)
-        }
-        // 最终 clip = (A ∪ C) ∩ diffB
-        val finalClip = Path(unionAC).apply {
-            op(diffB, Path.Op.INTERSECT)
-        }
-        canvas.clipPath(finalClip)
+        val clipPath = Path(pathC)
+        clipPath.op(pathB, Path.Op.UNION)
+        clipPath.op(pathA, Path.Op.DIFFERENCE)
+        canvas.clipPath(clipPath)
         canvas.drawBitmap(pathBContentBitmap, 0f, 0f, null)
         drawPathBShadow(canvas)
         canvas.restore()
@@ -664,7 +761,7 @@ class DoraBookPager @JvmOverloads constructor(
         return pathC
     }
 
-    fun calcXYPoints(a: PagerPoint, f: PagerPoint) {
+    private fun calcXYPoints(a: PagerPoint, f: PagerPoint) {
         g.x = (a.x + f.x) / 2
         g.y = (a.y + f.y) / 2
         e.x = g.x - (f.y - g.y) * (f.y - g.y) / (f.x - g.x)
@@ -747,6 +844,8 @@ class DoraBookPager @JvmOverloads constructor(
     interface OnPageChangeListener {
         fun onPagePre()
         fun onPageNext()
+        fun onFirstPage()
+        fun onLastPage()
         fun onPageCancel()
     }
 

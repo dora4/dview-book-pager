@@ -4,7 +4,9 @@
     <declare-styleable name="DoraBookPager">
         <!-- 翻页动画时长（毫秒） -->
         <attr name="dview_bp_duration" format="integer" />
-        <!-- 折角最大半径（像素） -->
-        <attr name="dview_bp_maxCurlRadius" format="dimension" />
+        <!-- 纸张正面颜色 -->
+        <attr name="dview_bp_pagerFrontColor" format="color|reference" />
+        <!-- 纸张背面颜色 -->
+        <attr name="dview_bp_pagerBackColor" format="color|reference" />
     </declare-styleable>
 </resources>
